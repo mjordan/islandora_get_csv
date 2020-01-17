@@ -1,0 +1,6 @@
+name = "Islandora Get CSV"
+description = "Islandora module that generates a CSV file of metadata used in a collection."
+version = 7.x-dev
+core = 7.x
+package = Islandora Tools
+dependencies[] = islandora

@@ -1,0 +1,134 @@
+<?php
+
+/**
+ * @file
+ * The main module file.
+ */
+
+/**
+ * Implements hook_islandora_basic_collection_build_manage_object().
+ */
+function islandora_get_csv_islandora_basic_collection_build_manage_object(array $form_state, AbstractObject $object) {
+  $form_state['manage_collection_object']['get_csv'] = array(
+    '#id' => 'generate-csv',
+    '#group' => 'manage_object',
+    '#access' => user_access('administer site configuration'),
+    '#type' => 'fieldset',
+    '#title' => t('Generate CSV file of metadata used in this collection'),
+    'form' => drupal_get_form('islandora_get_csv_generate_list', $object),
+  );
+  return $form_state;
+}
+
+/**
+ * Form definition.
+ */
+function islandora_get_csv_generate_list() {
+  $form = array();
+  $form['islandora_get_csv_generate_list_description'] = array(
+    '#markup' => t('The list will contain a CSV file containing one record per object.'),
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+  );
+  $form['islandora_get_csv_generate_list_submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Generate CSV'),
+    '#submit' => array('islandora_get_csv_generate_list_submit_callback'),
+  );
+  return $form;
+}
+
+/**
+ * Form submit callback.
+ */
+function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
+  $collection_pid = arg(2);
+  if ($link = islandora_get_csv_write_csv($collection_pid)) {
+    drupal_set_message(t("Download your CSV at !link.",
+      array('!link' => $link)));
+  }
+}
+
+/**
+ * Generates the list and writes it to the public files directory.
+ *
+ * @param string $pid
+ *   The collection's PID.
+ *
+ * @return string
+ *   The rendered link to the output file.
+ */
+function islandora_get_csv_write_csv($pid) {
+  $pid_for_filename = preg_replace('/:/', '_', $pid);
+  $output_dir = variable_get('file_public_path', conf_path() . '/files');
+  $output_file_path = $output_dir . '/' . $pid_for_filename . '.csv';
+  if (file_exists($output_file_path)) {
+    unlink($output_file_path);
+  }
+
+  global $base_url;
+  $results = islandora_get_csv_query_solr($pid);
+  foreach ($results as &$result) {
+    $url = $base_url . '/islandora/object/' . $result[0];
+    $result[2] = preg_replace('#info:fedora/#', '', $result[2]);
+    $row = $result[0] . "\t" . trim($result[1]) . "\t" . $url . "\t" . $result[2] . "\n";
+    file_put_contents($output_file_path, $row, FILE_APPEND);
+  }
+  // Remove the 'sites/default/files' since it's added by file_create_url().
+  $relative_bag_path = preg_replace("#$output_dir#", '', $output_file_path);
+  $download_path = file_create_url(file_build_uri($relative_bag_path));
+  return l(t('here'), $download_path);
+}
+
+/**
+ * Queries the Solr index to get our list.
+ *
+ * @param string $pid
+ *   The collection's PID.
+ *
+ * @return array
+ *   An array containing all of the PIDs matching $query.
+ */
+function islandora_get_csv_query_solr($pid) {
+  $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
+  // $solr_request = 'http://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&facet&fl=mods_*";
+  $solr_request = 'http://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&fl=mods_*";
+  $field_list = @file_get_contents($solr_request);
+  $field_array = explode(',', $field_list);
+  $field_array_filtered = array();
+  foreach ($field_array as $fieldname) {
+    if (preg_match('/(_s|_ms)/', $fieldname)) {
+      $field_array_filtered[] = $fieldname;
+    }
+  }
+  dd($field_array_filtered);
+/*
+  $query = 'RELS_EXT_isMemberOfCollection_uri_t:"info:fedora/' . $pid . '"';
+  $pid = preg_replace('/:/', '/\:/', $pid);
+  $results = array();
+  $query_processor = new IslandoraSolrQueryProcessor();
+  $query_processor->solrQuery = $query;
+  $query_processor->solrParams['fl'] = 'PID,' . trim($field) . ',RELS_EXT_hasModel_uri_t';
+  $query_processor->solrLimit = '1000000';
+  $query_processor->executeQuery(FALSE);
+  if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
+    foreach ($query_processor->islandoraSolrResult['response']['objects'] as $object) {
+      if (isset($object['solr_doc'][$field]) && strlen($object['solr_doc'][$field])) {
+        $field_value = $object['solr_doc'][$field];
+      }
+      else {
+        $field_value = '';
+      }
+      $results[] = array(
+        $object['solr_doc']['PID'],
+        $field_value, $object['solr_doc']['RELS_EXT_hasModel_uri_t'],
+      );
+    }
+    return $results;
+  }
+  else {
+    drupal_set_message(t("Query did not return any results"), 'error');
+    return FALSE;
+  }
+*/
+}
