@@ -22,6 +22,12 @@ The list only contains rows for objects that are direct children of the current 
 
 ![Sample CSV](docs/images/csv.png)
 
+## Configuration
+
+Admin settings are at `admin/islandora/tools/islandora_get_csv`.
+
+Users need 'manage collection policy' permissions to see the "Generate CSV file of metadata used in this collection" link.
+
 ## Dependencies
 
 * [Islandora](https://github.com/Islandora/islandora)

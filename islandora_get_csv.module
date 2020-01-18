@@ -6,13 +6,43 @@
  */
 
 /**
+ * Implements hook_menu().
+ */
+function islandora_get_csv_menu() {
+  $items['admin/islandora/tools/islandora_get_csv'] = array(
+    'title' => 'Islandora Get Metadata CSV',
+    'description' => 'Configure the Islandora Get Metadata CSV module.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_get_csv_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Admin form definition.
+ */
+function islandora_get_csv_admin_settings() {
+  $form = array();
+  $form['islandora_get_csv_field_suffix_list'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr field types to include'),
+    '#default_value' => variable_get('islandora_get_csv_field_suffix_list', '_s|_ms'),
+    '#description' => t("A pipe-separated list of Solr field type suffixes, including the leading _, to include."),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
  * Implements hook_islandora_basic_collection_build_manage_object().
  */
 function islandora_get_csv_islandora_basic_collection_build_manage_object(array $form_state, AbstractObject $object) {
   $form_state['manage_collection_object']['get_csv'] = array(
     '#id' => 'generate-csv',
     '#group' => 'manage_object',
-    '#access' => user_access('administer site configuration'),
+    '#access' => user_access('manage collection policy'),
     '#type' => 'fieldset',
     '#title' => t('Generate CSV file of metadata used in this collection'),
     'form' => drupal_get_form('islandora_get_csv_generate_list', $object),
@@ -85,6 +115,7 @@ function islandora_get_csv_write_csv($pid) {
  *   or FALSE if there was a problem.
  */
 function islandora_get_csv_query_solr($pid) {
+  $field_type_filter = variable_get('islandora_get_csv_field_suffix_list', '_s|_ms');
   // We don't use IslandoraSolrQueryProcessor for CSV results since
   // it doesn't seem possible to override the 'wt' parameter.
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
@@ -93,7 +124,8 @@ function islandora_get_csv_query_solr($pid) {
   $field_array = explode(',', $field_list);
   $field_array_filtered = array();
   foreach ($field_array as $fieldname) {
-    if (preg_match('/(_s|_ms)$/', $fieldname)) {
+    // if (preg_match('/(_s|_ms)$/', $fieldname)) {
+    if (preg_match('/(' . $field_type_filter . ')$/', $fieldname)) {
       $field_array_filtered[] = $fieldname;
     }
   }
