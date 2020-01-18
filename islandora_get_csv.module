@@ -28,8 +28,20 @@ function islandora_get_csv_admin_settings() {
   $form['islandora_get_csv_field_suffix_list'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr field types to include'),
-    '#default_value' => variable_get('islandora_get_csv_field_suffix_list', '_s|_ms'),
-    '#description' => t("A pipe-separated list of Solr field type suffixes, including the leading _, to include."),
+    '#default_value' => variable_get('islandora_get_csv_field_suffix_list', '_s,_ms'),
+    '#description' => t("A comma-separated list of Solr field type suffixes, including the leading _, to include."),
+  );
+  $form['islandora_get_csv_additional_fields'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr field types to include'),
+    '#default_value' => variable_get('islandora_get_csv_additional_fields', 'PID,'),
+    '#description' => t("A comma-separated list of Solr fields to include in the CSV. These are included in addition to the fields ending in the field types above."),
+  );
+  $form['islandora_get_csv_omit_fields'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr field types to not include'),
+    '#default_value' => variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms'),
+    '#description' => t("A comma-separated list of Solr fields to not include in the CSV."),
   );
 
   return system_settings_form($form);
@@ -116,6 +128,7 @@ function islandora_get_csv_write_csv($pid) {
  */
 function islandora_get_csv_query_solr($pid) {
   $field_type_filter = variable_get('islandora_get_csv_field_suffix_list', '_s|_ms');
+  $field_type_filter = preg_replace('/,/', '|', $field_type_filter);
   // We don't use IslandoraSolrQueryProcessor for CSV results since
   // it doesn't seem possible to override the 'wt' parameter.
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
@@ -124,17 +137,21 @@ function islandora_get_csv_query_solr($pid) {
   $field_array = explode(',', $field_list);
   $field_array_filtered = array();
   foreach ($field_array as $fieldname) {
-    // if (preg_match('/(_s|_ms)$/', $fieldname)) {
     if (preg_match('/(' . $field_type_filter . ')$/', $fieldname)) {
       $field_array_filtered[] = $fieldname;
     }
   }
+  // Filter out unwanted fields.
+  $unwanted_fields_string = variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms');
+  $unwanted_fields_array = explode(',', $unwanted_fields_string);
+  $field_array_filtered = array_diff($field_array_filtered, $unwanted_fields_array);
 
   // Perform a query on every MODS-sourced field in our Solr index using a
   // wildcard and collection-based query filter to see if there are any
   // results. If there are results, the field is used in the collection;
   // if there aren't any results, the field is not used in the collection.
-  $fields_used_in_collection = array('PID');
+  $additional_fields = variable_get('islandora_get_csv_additional_fields', 'PID');
+  $fields_used_in_collection = explode(',', $additional_fields);
   foreach ($field_array_filtered as $filtered_field_name) {
     $query_processor = new IslandoraSolrQueryProcessor();
     $collection_pid = preg_replace('/:/', '/\:/', $pid);

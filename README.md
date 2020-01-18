@@ -22,11 +22,13 @@ The list only contains rows for objects that are direct children of the current 
 
 ![Sample CSV](docs/images/csv.png)
 
+Values of multivalued fields are subdelimited by commas.
+
 ## Configuration
 
 Admin settings are at `admin/islandora/tools/islandora_get_csv`.
 
-Users need 'manage collection policy' permissions to see the "Generate CSV file of metadata used in this collection" link.
+Users need the 'Manage collection policies' permission to see the "Generate CSV file of metadata used in this collection" link and generate a CSV file.
 
 ## Dependencies
 
