@@ -32,7 +32,7 @@ function islandora_get_csv_generate_list() {
   );
   $form['islandora_get_csv_generate_list_submit'] = array(
     '#type' => 'submit',
-    '#value' => t('Generate CSV'),
+    '#value' => t('Generate metadata CSV'),
     '#submit' => array('islandora_get_csv_generate_list_submit_callback'),
   );
   return $form;
@@ -66,17 +66,11 @@ function islandora_get_csv_write_csv($pid) {
     unlink($output_file_path);
   }
 
-  global $base_url;
-  $results = islandora_get_csv_query_solr($pid);
-  foreach ($results as &$result) {
-    $url = $base_url . '/islandora/object/' . $result[0];
-    $result[2] = preg_replace('#info:fedora/#', '', $result[2]);
-    $row = $result[0] . "\t" . trim($result[1]) . "\t" . $url . "\t" . $result[2] . "\n";
-    file_put_contents($output_file_path, $row, FILE_APPEND);
-  }
+  $metadata_csv = islandora_get_csv_query_solr($pid);
+  file_put_contents($output_file_path, $metadata_csv);
   // Remove the 'sites/default/files' since it's added by file_create_url().
-  $relative_bag_path = preg_replace("#$output_dir#", '', $output_file_path);
-  $download_path = file_create_url(file_build_uri($relative_bag_path));
+  $relative_file_path = preg_replace("#$output_dir#", '', $output_file_path);
+  $download_path = file_create_url(file_build_uri($relative_file_path));
   return l(t('here'), $download_path);
 }
 
@@ -87,48 +81,50 @@ function islandora_get_csv_write_csv($pid) {
  *   The collection's PID.
  *
  * @return array
- *   An array containing all of the PIDs matching $query.
+ *   An array containing all of the PIDs matching $query
+ *   or FALSE if there was a problem.
  */
 function islandora_get_csv_query_solr($pid) {
+  // We don't use IslandoraSolrQueryProcessor for CSV results since
+  // it doesn't seem possible to override the 'wt' parameter.
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
-  // $solr_request = 'http://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&facet&fl=mods_*";
   $solr_request = 'http://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&fl=mods_*";
   $field_list = @file_get_contents($solr_request);
   $field_array = explode(',', $field_list);
   $field_array_filtered = array();
   foreach ($field_array as $fieldname) {
-    if (preg_match('/(_s|_ms)/', $fieldname)) {
+    if (preg_match('/(_s|_ms)$/', $fieldname)) {
       $field_array_filtered[] = $fieldname;
     }
   }
-  dd($field_array_filtered);
-/*
-  $query = 'RELS_EXT_isMemberOfCollection_uri_t:"info:fedora/' . $pid . '"';
-  $pid = preg_replace('/:/', '/\:/', $pid);
-  $results = array();
-  $query_processor = new IslandoraSolrQueryProcessor();
-  $query_processor->solrQuery = $query;
-  $query_processor->solrParams['fl'] = 'PID,' . trim($field) . ',RELS_EXT_hasModel_uri_t';
-  $query_processor->solrLimit = '1000000';
-  $query_processor->executeQuery(FALSE);
-  if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
-    foreach ($query_processor->islandoraSolrResult['response']['objects'] as $object) {
-      if (isset($object['solr_doc'][$field]) && strlen($object['solr_doc'][$field])) {
-        $field_value = $object['solr_doc'][$field];
-      }
-      else {
-        $field_value = '';
-      }
-      $results[] = array(
-        $object['solr_doc']['PID'],
-        $field_value, $object['solr_doc']['RELS_EXT_hasModel_uri_t'],
-      );
-    }
-    return $results;
+
+  // Perform a query on every MODS-sourced field in our Solr index using a
+  // wildcard and collection-based query filter to see if there are any
+  // results. If there are results, the field is used in the collection;
+  // if there aren't any results, the field is not used in the collection.
+  $fields_used_in_collection = array('PID');
+  foreach ($field_array_filtered as $filtered_field_name) {
+    $query_processor = new IslandoraSolrQueryProcessor();
+    $collection_pid = preg_replace('/:/', '/\:/', $pid);
+    $query_processor->solrParams['fq'] = 'RELS_EXT_isMemberOfCollection_uri_t:"info:fedora/' . $collection_pid . '"';
+    $query_processor->solrLimit = '0';
+    $query = $filtered_field_name . ':*';  
+    $query_processor->solrQuery = $query;
+    $query_processor->executeQuery(FALSE);
+    if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
+      $fields_used_in_collection[] = $filtered_field_name;  
+    } 
+  }
+  $collection_fields_param = implode(',', $fields_used_in_collection);
+ 
+  $collection_filter = 'RELS_EXT_isMemberOfCollection_uri_t:info\:fedora/' . $collection_pid;
+  $solr_request = 'http://' . $solr_endpoint . '/select?q=PID:*&wt=csv&rows=1000000&fq=' . $collection_filter . '&fl=' . $collection_fields_param;
+  $metadata_csv = @file_get_contents($solr_request);
+
+  if (strlen($metadata_csv)) {
+    return $metadata_csv;
   }
   else {
-    drupal_set_message(t("Query did not return any results"), 'error');
     return FALSE;
   }
-*/
 }
