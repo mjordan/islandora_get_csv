@@ -1,22 +1,17 @@
 # Islandora Metadata CSV
 
-Not fully functional. Probably best not to use it yet.
-
 ## Overview
 
-Islandora 7.x utility module to generate a CSV file of the metadata used in a collection.
+Islandora 7.x utility module to generate a CSV file of the metadata used in a collection. To generate a CSV file, a user does the following:
 
-1. go to a collection's "Manage" tab
-1. click on the "Collection" subtab
-1. click on the "Generate CSV file of metadata used in this collection" vertical tab
-1. click on the "Generate metadata CSV" button.
-1. download the file.
-
-Screencaps:
-
-![The menu](docs/images/collection_menu.png)
-![The button](docs/images/collection_button.png)
-![The link](docs/images/collection_download.png)
+1. Go to a collection's "Manage" tab
+1. Click on the "Collection" subtab
+1. Click on the "Generate CSV file of metadata used in this collection" vertical tab
+   ![The menu](docs/images/collection_menu.png)
+1. Click on the "Generate metadata CSV" button.
+   ![The button](docs/images/collection_button.png)
+1. Download the file.
+   ![The link](docs/images/collection_download.png)
 
 The list only contains rows for objects that are direct children of the current collection, and the columns in the CSV file are filtered to those Solr fields that have at least one value in the collection:
 

@@ -142,6 +142,7 @@ function islandora_get_csv_query_solr($pid) {
   $field_type_filter = variable_get('islandora_get_csv_field_suffix_list', '_s|_ms');
   $field_type_filter = preg_replace('/,/', '|', $field_type_filter);
   $field_name_pattern = variable_get('islandora_get_csv_field_pattern', 'mods_*');
+
   // We don't use IslandoraSolrQueryProcessor for CSV results since
   // it doesn't seem possible to override the 'wt' parameter.
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
@@ -154,11 +155,13 @@ function islandora_get_csv_query_solr($pid) {
       $field_array_filtered[] = $fieldname;
     }
   }
+
   // Filter out unwanted fields.
   $unwanted_fields_string = variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms');
   $unwanted_fields_array = explode(',', $unwanted_fields_string);
   $field_array_filtered = array_diff($field_array_filtered, $unwanted_fields_array);
 
+  // Remove _x eqivalents to _mxx fields.
   if (variable_get('islandora_get_remove_single_value_fields', TRUE)) {
     $dupes = array();
     foreach ($field_array_filtered as $field_name_to_test) {
