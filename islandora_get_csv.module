@@ -25,23 +25,35 @@ function islandora_get_csv_menu() {
  */
 function islandora_get_csv_admin_settings() {
   $form = array();
+  $form['islandora_get_csv_field_pattern'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Solr field pattern'),
+    '#default_value' => variable_get('islandora_get_csv_field_pattern', 'mods_*'),
+    '#description' => t("Pattern for use for matching Solr field names to include in the CSV file. Must be compatible with Solr's 'fl' parameter. For example, 'mods_* will filter for all fields derived from MODS; dc.* will filter for all DC fields."),
+  );
   $form['islandora_get_csv_field_suffix_list'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr field types to include'),
     '#default_value' => variable_get('islandora_get_csv_field_suffix_list', '_s,_ms'),
-    '#description' => t("A comma-separated list of Solr field type suffixes, including the leading _, to include."),
+    '#description' => t("A comma-separated list of Solr field type suffixes to include in the CSV file, including the leading '_'."),
   );
   $form['islandora_get_csv_additional_fields'] = array(
     '#type' => 'textfield',
-    '#title' => t('Solr field types to include'),
-    '#default_value' => variable_get('islandora_get_csv_additional_fields', 'PID,'),
-    '#description' => t("A comma-separated list of Solr fields to include in the CSV. These are included in addition to the fields ending in the field types above."),
+    '#title' => t('Solr fields to include'),
+    '#default_value' => variable_get('islandora_get_csv_additional_fields', 'PID,RELS_EXT_hasModel_uri_s'),
+    '#description' => t('A comma-separated list of Solr fields to include in the CSV file. These fields are included in addition to the fields filtered by the patterns in the above two settings.'),
   );
   $form['islandora_get_csv_omit_fields'] = array(
     '#type' => 'textfield',
-    '#title' => t('Solr field types to not include'),
-    '#default_value' => variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms'),
-    '#description' => t("A comma-separated list of Solr fields to not include in the CSV."),
+    '#title' => t('Solr fields to exclude'),
+    '#default_value' => variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms,mods_titleInfo_title_all_ms'),
+    '#description' => t("A comma-separated list of Solr fields to exclude from the CSV file."),
+  );
+  $form['islandora_get_remove_single_value_fields'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Remove single-value fields where applicable'),
+    '#default_value' => variable_get('islandora_get_remove_single_value_fields', TRUE),
+    '#description' => t("Many fields in Islandora's Solr index have both single- and multivalue equivalents. Checking this will remove single-value fields from the CSV file that have multivalue equivalents, for example 'mods_titleInfo_title_s' if 'mods_titleInfo_title_ms' exists."),
   );
 
   return system_settings_form($form);
@@ -129,10 +141,11 @@ function islandora_get_csv_write_csv($pid) {
 function islandora_get_csv_query_solr($pid) {
   $field_type_filter = variable_get('islandora_get_csv_field_suffix_list', '_s|_ms');
   $field_type_filter = preg_replace('/,/', '|', $field_type_filter);
+  $field_name_pattern = variable_get('islandora_get_csv_field_pattern', 'mods_*');
   // We don't use IslandoraSolrQueryProcessor for CSV results since
   // it doesn't seem possible to override the 'wt' parameter.
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
-  $solr_request = 'http://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&fl=mods_*";
+  $solr_request = 'http://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&fl=" . $field_name_pattern;
   $field_list = @file_get_contents($solr_request);
   $field_array = explode(',', $field_list);
   $field_array_filtered = array();
@@ -145,6 +158,24 @@ function islandora_get_csv_query_solr($pid) {
   $unwanted_fields_string = variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms');
   $unwanted_fields_array = explode(',', $unwanted_fields_string);
   $field_array_filtered = array_diff($field_array_filtered, $unwanted_fields_array);
+
+  if (variable_get('islandora_get_remove_single_value_fields', TRUE)) {
+    $dupes = array();
+    foreach ($field_array_filtered as $field_name_to_test) {
+      if (preg_match('/_m.{1,3}$/', $field_name_to_test, $matches)) {
+        // E.g., _mst, _ms.
+        $suffix = $matches[0];
+        // Get everything other than the leading _m.
+        $suffix_to_dedupe = substr($suffix, 2);
+        // Get everything in the metched field name other than the _mxx.
+        $field_name_base = preg_replace('/_m.{1,3}$/', '', $field_name_to_test);
+        // Assemble the fieldname we want to remove.
+        $field_name_to_remove = $field_name_base . '_' . $suffix_to_dedupe;
+        $dupes[] = $field_name_to_remove;
+      }
+    }
+    $field_array_filtered = array_diff($field_array_filtered, $dupes);;
+  }
 
   // Perform a query on every MODS-sourced field in our Solr index using a
   // wildcard and collection-based query filter to see if there are any
