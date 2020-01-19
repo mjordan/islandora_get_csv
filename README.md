@@ -19,6 +19,11 @@ The list only contains rows for objects that are direct children of the current 
 
 Values of multivalued fields are subdelimited by commas.
 
+## Installation
+
+1. `git clone https://github.com/mjordan/islandora_get_csv.git`
+1. `drush en -y islandora_get_csv` or enable it at Admin > Modules.
+
 ## Configuration
 
 Admin settings are at `admin/islandora/tools/islandora_get_csv`.
