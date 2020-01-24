@@ -19,6 +19,12 @@ The list only contains rows for objects that are direct children of the current 
 
 Values of multivalued fields are subdelimited by commas.
 
+## Drush interface
+
+You can also generate a CSV using Drush:
+
+`drush islandora-get-csv-get-csv --collection_pid=islandora:sp_basic_image_collection --output_file=/tmp/output.csv`
+
 ## Installation
 
 1. `git clone https://github.com/mjordan/islandora_get_csv.git`
