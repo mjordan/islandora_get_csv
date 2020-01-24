@@ -25,31 +25,43 @@ function islandora_get_csv_menu() {
  */
 function islandora_get_csv_admin_settings() {
   $form = array();
-  $form['islandora_get_csv_field_pattern'] = array(
+  $form['islandora_get_csv_inclusion'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Field inclusion options'),
+    '#collapsible' => FALSE,
+    '#description' => t('These settings define which fields to include in the CSV.'),
+  );
+  $form['islandora_get_csv_inclusion']['islandora_get_csv_field_pattern'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr field pattern'),
     '#default_value' => variable_get('islandora_get_csv_field_pattern', 'mods_*'),
     '#description' => t("Pattern for use for matching Solr field names to include in the CSV file. Must be compatible with Solr's 'fl' parameter. For example, 'mods_* will filter for all fields derived from MODS; dc.* will filter for all DC fields."),
   );
-  $form['islandora_get_csv_field_suffix_list'] = array(
+  $form['islandora_get_csv_inclusion']['islandora_get_csv_field_suffix_list'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr field types to include'),
     '#default_value' => variable_get('islandora_get_csv_field_suffix_list', '_s,_ms'),
     '#description' => t("A comma-separated list of Solr field type suffixes to include in the CSV file, including the leading '_'."),
   );
-  $form['islandora_get_csv_additional_fields'] = array(
+  $form['islandora_get_csv_inclusion']['islandora_get_csv_additional_fields'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr fields to include'),
     '#default_value' => variable_get('islandora_get_csv_additional_fields', 'PID,RELS_EXT_hasModel_uri_s'),
-    '#description' => t('A comma-separated list of Solr fields to include in the CSV file. These fields are included in addition to the fields filtered by the patterns in the above two settings.'),
+    '#description' => t('A comma-separated list of specific Solr fields to include in the CSV file. These fields are included in addition to the fields filtered by the patterns in the above two settings.'),
   );
-  $form['islandora_get_csv_omit_fields'] = array(
+  $form['islandora_get_csv_exclusion'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Field exclusion options'),
+    '#collapsible' => FALSE,
+    '#description' => t('These settings define which fields to exclude from the CSV.'),
+  );
+  $form['islandora_get_csv_exclusion']['islandora_get_csv_omit_fields'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr fields to exclude'),
     '#default_value' => variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms,mods_titleInfo_title_all_ms'),
-    '#description' => t("A comma-separated list of Solr fields to exclude from the CSV file."),
+    '#description' => t("A comma-separated list of specific Solr fields to exclude from the CSV file."),
   );
-  $form['islandora_get_remove_single_value_fields'] = array(
+  $form['islandora_get_csv_exclusion']['islandora_get_remove_single_value_fields'] = array(
     '#type' => 'checkbox',
     '#title' => t('Remove single-value fields where applicable'),
     '#default_value' => variable_get('islandora_get_remove_single_value_fields', TRUE),
