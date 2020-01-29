@@ -9,11 +9,13 @@
  *
  * @param string $pid
  *   The collection's PID.
+ * @param string $collection_limiter
+ *   Either 'is member of' or 'ancestors'.
  *
  * @return array
  *   The CSV output from Solr, or FALSE if there was a problem.
  */
-function islandora_get_csv_query_solr($pid) {
+function islandora_get_csv_query_solr($pid, $collection_limiter) {
   $field_type_filter = variable_get('islandora_get_csv_field_suffix_list', '_s|_ms');
   $field_type_filter = preg_replace('/,/', '|', $field_type_filter);
   $field_name_pattern = variable_get('islandora_get_csv_field_pattern', 'mods_*');
@@ -64,7 +66,14 @@ function islandora_get_csv_query_solr($pid) {
   foreach ($field_array_filtered as $filtered_field_name) {
     $query_processor = new IslandoraSolrQueryProcessor();
     $collection_pid = preg_replace('/:/', '/\:/', $pid);
-    $query_processor->solrParams['fq'] = 'RELS_EXT_isMemberOfCollection_uri_t:"info:fedora/' . $collection_pid . '"';
+
+    if ($collection_limiter == 'is member of') {
+      $query_processor->solrParams['fq'] = 'RELS_EXT_isMemberOfCollection_uri_t:"info:fedora/' . $collection_pid . '"';
+    }
+    if ($collection_limiter == 'ancestors') {
+      $query_processor->solrParams['fq'] = 'ancestors_ms:"' . $collection_pid . '"';
+    }
+
     $query_processor->solrLimit = '0';
     $query = $filtered_field_name . ':*';  
     $query_processor->solrQuery = $query;

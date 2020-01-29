@@ -6,6 +6,7 @@ Islandora 7.x utility module to generate a CSV file of the metadata used in a co
 
 1. Go to a collection's "Manage" tab
 1. Click on the "Collection" subtab
+1. Select how you want to define members of a collection. "Is Member Of" will include only direct children of the current collection; "Ancestors" will include all objects that have the current collection as an ancestor (). Note that using "Ancestors" requires that your Solr index contains the "ancestors_ms" field.
 1. Click on the "Generate CSV file of metadata used in this collection" vertical tab
    ![The menu](docs/images/collection_menu.png)
 1. Click on the "Generate metadata CSV" button.

@@ -96,6 +96,13 @@ function islandora_get_csv_generate_list() {
     '#prefix' => '<div>',
     '#suffix' => '</div>',
   );
+  $form['islandora_get_csv_collection_limiter'] = array(
+    '#type' => 'select',
+    '#options' => array('is member of' => 'Is Member Of', 'ancestors' => 'Ancestors'),
+    '#title' => t('Collection limiter'),
+    '#description' => t("If you have \"ancestors_ms\" indexed, choose \"Ancestors\" to include child objects " . 
+      "such as pages in your CSV. Otherwise, select \"Is Member Of\"."),
+  );
   $form['islandora_get_csv_generate_list_submit'] = array(
     '#type' => 'submit',
     '#value' => t('Generate metadata CSV'),
@@ -109,7 +116,8 @@ function islandora_get_csv_generate_list() {
  */
 function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
   $collection_pid = arg(2);
-  if ($link = islandora_get_csv_write_csv_from_gui($collection_pid)) {
+  $collection_limiter = $form_state['values']['islandora_get_csv_collection_limiter'];
+  if ($link = islandora_get_csv_write_csv_from_gui($collection_pid, $collection_limiter)) {
     drupal_set_message(t("Download your CSV at !link.",
       array('!link' => $link)));
   }
@@ -120,11 +128,13 @@ function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
  *
  * @param string $pid
  *   The collection's PID.
+ * @param string $collection_limiter
+ *   Either 'is member of' or 'ancestors'.
  *
  * @return string
  *   The rendered link to the output file.
  */
-function islandora_get_csv_write_csv_from_gui($pid) {
+function islandora_get_csv_write_csv_from_gui($pid, $collection_limiter) {
   $pid_for_filename = preg_replace('/:/', '_', $pid);
   $output_dir = variable_get('file_public_path', conf_path() . '/files');
   $output_file_path = $output_dir . '/' . $pid_for_filename . '.csv';
@@ -133,7 +143,7 @@ function islandora_get_csv_write_csv_from_gui($pid) {
   }
 
   module_load_include('inc', 'islandora_get_csv', 'includes/utilities');
-  $metadata_csv = islandora_get_csv_query_solr($pid);
+  $metadata_csv = islandora_get_csv_query_solr($pid, $collection_limiter);
   file_put_contents($output_file_path, $metadata_csv);
   // Remove the path to the files directory since it's added by file_create_url().
   $relative_file_path = preg_replace("#$output_dir#", '', $output_file_path);
