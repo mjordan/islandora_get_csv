@@ -33,6 +33,13 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
     }
   }
 
+  if ($collection_limiter == 'ancestors') {
+    if (!in_array('ancestors_ms', $field_array)) {
+      drupal_set_message(t('Your Solr index does not include ancestors.'), 'warning');
+      return FALSE;
+    }
+  }
+
   // Filter out unwanted fields.
   $unwanted_fields_string = variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms');
   $unwanted_fields_array = explode(',', $unwanted_fields_string);
