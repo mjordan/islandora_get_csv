@@ -34,6 +34,7 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   }
 
   if ($collection_limiter == 'ancestors') {
+    dd($field_array);
     if (!in_array('ancestors_ms', $field_array)) {
       drupal_set_message(t('Your Solr index does not include ancestors.'), 'warning');
       return FALSE;
@@ -72,14 +73,19 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   $fields_used_in_collection = explode(',', $additional_fields);
   foreach ($field_array_filtered as $filtered_field_name) {
     $query_processor = new IslandoraSolrQueryProcessor();
-    $collection_pid = preg_replace('/:/', '/\:/', $pid);
+    $collection_pid = preg_replace('/:/', '\:', $pid);
 
     if ($collection_limiter == 'is member of') {
-      $query_processor->solrParams['fq'] = 'RELS_EXT_isMemberOfCollection_uri_t:"info:fedora/' . $collection_pid . '"';
+      $query_processor->solrParams['fq'] = 'RELS_EXT_isMemberOfCollection_uri_t:"info\:fedora/' . $collection_pid . '"';
+      $collection_filter = 'RELS_EXT_isMemberOfCollection_uri_t:"info\:fedora/' . $collection_pid . '"';
     }
     if ($collection_limiter == 'ancestors') {
       $query_processor->solrParams['fq'] = 'ancestors_ms:"' . $collection_pid . '"';
+      $collection_filter = 'ancestors_ms:"' . $collection_pid . '"';
     }
+
+    // dd($collection_filter, 'Collection filter');
+    // dd($query_processor->solrParams['fq'], 'fq');
 
     $query_processor->solrLimit = '0';
     $query = $filtered_field_name . ':*';  
@@ -88,10 +94,11 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
     if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
       $fields_used_in_collection[] = $filtered_field_name;  
     } 
+    dd($query_processor->islandoraSolrResult);
   }
   $collection_fields_param = implode(',', $fields_used_in_collection);
  
-  $collection_filter = 'RELS_EXT_isMemberOfCollection_uri_t:info\:fedora/' . $collection_pid;
+  // $collection_filter = 'RELS_EXT_isMemberOfCollection_uri_t:info\:fedora/' . $collection_pid;
   $solr_request = 'http://' . $solr_endpoint . '/select?q=PID:*&wt=csv&rows=1000000&fq=' . $collection_filter . '&fl=' . $collection_fields_param;
   $metadata_csv = @file_get_contents($solr_request);
 
