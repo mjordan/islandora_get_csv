@@ -16,11 +16,12 @@
  *   The CSV output from Solr, or FALSE if there was a problem.
  */
 function islandora_get_csv_query_solr($pid, $collection_limiter) {
+  $collection_pid = preg_replace('/:/', '\:', $pid);
   $field_type_filter = variable_get('islandora_get_csv_field_suffix_list', '_s|_ms');
   $field_type_filter = preg_replace('/,/', '|', $field_type_filter);
   $field_name_pattern = variable_get('islandora_get_csv_field_pattern', 'mods_*');
 
-  // We don't use IslandoraSolrQueryProcessor for CSV results since
+  // We don't use IslandoraSolrQueryProcessor for CSV results because
   // it doesn't seem possible to override the 'wt' parameter.
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
   $solr_request = 'http://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&fl=" . $field_name_pattern;
@@ -33,9 +34,12 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
     }
   }
 
+  // If user chose 'Ancestors', check to see if that field has been indexed.
   if ($collection_limiter == 'ancestors') {
-    dd($field_array);
-    if (!in_array('ancestors_ms', $field_array)) {
+    $ancestors_request = 'http://' . $solr_endpoint . '/select?q=ancestors_ms:*&fl=PID&wt=json&rows=1&fq=ancestors_ms:"' . $collection_pid . '"';
+    $ancestors_response = @file_get_contents($ancestors_request);
+    $ancestors_response = json_decode($ancestors_response, TRUE);
+    if ($ancestors_response['response']['numFound'] == 0) {
       drupal_set_message(t('Your Solr index does not include ancestors.'), 'warning');
       return FALSE;
     }
@@ -72,33 +76,25 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   $additional_fields = variable_get('islandora_get_csv_additional_fields', 'PID');
   $fields_used_in_collection = explode(',', $additional_fields);
   foreach ($field_array_filtered as $filtered_field_name) {
-    $query_processor = new IslandoraSolrQueryProcessor();
-    $collection_pid = preg_replace('/:/', '\:', $pid);
-
     if ($collection_limiter == 'is member of') {
-      $query_processor->solrParams['fq'] = 'RELS_EXT_isMemberOfCollection_uri_t:"info\:fedora/' . $collection_pid . '"';
+      $fq = 'RELS_EXT_isMemberOfCollection_uri_t:"info\:fedora/' . $collection_pid . '"';
       $collection_filter = 'RELS_EXT_isMemberOfCollection_uri_t:"info\:fedora/' . $collection_pid . '"';
     }
     if ($collection_limiter == 'ancestors') {
-      $query_processor->solrParams['fq'] = 'ancestors_ms:"' . $collection_pid . '"';
+      $fq = 'ancestors_ms:"' . $collection_pid . '"';
       $collection_filter = 'ancestors_ms:"' . $collection_pid . '"';
     }
 
-    // dd($collection_filter, 'Collection filter');
-    // dd($query_processor->solrParams['fq'], 'fq');
+    $field_request = 'http://' . $solr_endpoint . '/select?q=' . $filtered_field_name . ':*&wt=json&rows=0&fq=' . $collection_filter;
+    $field_response = @file_get_contents($field_request);
+    $field_response = json_decode($field_response, TRUE);
 
-    $query_processor->solrLimit = '0';
-    $query = $filtered_field_name . ':*';  
-    $query_processor->solrQuery = $query;
-    $query_processor->executeQuery(FALSE);
-    if ($query_processor->islandoraSolrResult['response']['numFound'] > 0) {
+    if ($field_response['response']['numFound'] > 0) {
       $fields_used_in_collection[] = $filtered_field_name;  
     } 
-    dd($query_processor->islandoraSolrResult);
   }
   $collection_fields_param = implode(',', $fields_used_in_collection);
  
-  // $collection_filter = 'RELS_EXT_isMemberOfCollection_uri_t:info\:fedora/' . $collection_pid;
   $solr_request = 'http://' . $solr_endpoint . '/select?q=PID:*&wt=csv&rows=1000000&fq=' . $collection_filter . '&fl=' . $collection_fields_param;
   $metadata_csv = @file_get_contents($solr_request);
 
