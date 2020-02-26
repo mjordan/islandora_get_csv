@@ -25,6 +25,18 @@ function islandora_get_csv_menu() {
  */
 function islandora_get_csv_admin_settings() {
   $form = array();
+  $form['islandora_get_csv_solr_server'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Solr server settings'),
+    '#collapsible' => FALSE,
+  );
+  $form['islandora_get_csv_solr_server']['islandora_get_csv_protocol'] = array(
+    '#type' => 'select',
+    '#options' => array('http' => 'http', 'https' => 'https'),
+    '#title' => t('HTTP protocol'),
+    '#default_value' => variable_get('islandora_get_csv_protocol', 'http'),
+    '#description' => t("This module gets your Solr server's address from the Islandora Solr Search module, but you need to indicate whether it uses 'http' or 'https'."),
+  );
   $form['islandora_get_csv_inclusion'] = array(
     '#type' => 'fieldset',
     '#title' => t('Field inclusion options'),
@@ -92,7 +104,7 @@ function islandora_get_csv_islandora_basic_collection_build_manage_object(array 
 function islandora_get_csv_generate_list() {
   $form = array();
   $form['islandora_get_csv_generate_list_description'] = array(
-    '#markup' => t('The list will contain a CSV file containing one record per object.'),
+    '#markup' => t('The CSV file will contain one record per object.'),
     '#prefix' => '<div>',
     '#suffix' => '</div>',
   );
