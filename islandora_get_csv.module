@@ -43,6 +43,12 @@ function islandora_get_csv_admin_settings() {
     '#collapsible' => FALSE,
     '#description' => t('These settings define which fields to include in the CSV.'),
   );
+  $form['islandora_get_csv_inclusion']['islandora_get_csv_collection_membership'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Collection membership field'),
+    '#default_value' => variable_get('islandora_get_csv_collection_membership', 'RELS_EXT_isMemberOfCollection_uri_t'),
+    '#description' => t("Solr field that contains collection PIDs."),
+  );
   $form['islandora_get_csv_inclusion']['islandora_get_csv_field_pattern'] = array(
     '#type' => 'textfield',
     '#title' => t('Solr field pattern'),
