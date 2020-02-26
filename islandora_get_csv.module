@@ -32,10 +32,10 @@ function islandora_get_csv_admin_settings() {
   );
   $form['islandora_get_csv_solr_server']['islandora_get_csv_protocol'] = array(
     '#type' => 'select',
-    '#options' => array('http' => 'http', 'https' => 'https'),
+    '#options' => array('http://' => 'http', 'https://' => 'https', '' => 'none'),
     '#title' => t('HTTP protocol'),
     '#default_value' => variable_get('islandora_get_csv_protocol', 'http'),
-    '#description' => t("This module gets your Solr server's address from the Islandora Solr Search module, but you need to indicate whether it uses 'http' or 'https'."),
+    '#description' => t("This module gets your Solr server's address from the Islandora Solr Search module, but you need to indicate whether it uses 'http' or 'https'. Use 'none' if your Solr Search module already includes the protocol."),
   );
   $form['islandora_get_csv_inclusion'] = array(
     '#type' => 'fieldset',

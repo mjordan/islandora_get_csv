@@ -24,8 +24,8 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   // We don't use IslandoraSolrQueryProcessor for CSV results because
   // it doesn't seem possible to override the 'wt' parameter.
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
-  $protocol =  variable_get('islandora_get_csv_protocol', 'http');
-  $solr_request = $protocol . '://' . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&fl=" . $field_name_pattern;
+  $protocol =  variable_get('islandora_get_csv_protocol', 'http://');
+  $solr_request = $protocol . $solr_endpoint . "/select?q=*:*&wt=csv&rows=0&fl=" . $field_name_pattern;
   $field_list = @file_get_contents($solr_request);
   $field_array = explode(',', $field_list);
   $field_array_filtered = array();
@@ -88,7 +88,7 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   }
 
   foreach ($field_array_filtered as $filtered_field_name) {
-    $field_request = $protocol . '://' . $solr_endpoint . '/select?q=' . $filtered_field_name . ':*&wt=json&rows=0&fq=' . $collection_filter;
+    $field_request = $protocol . $solr_endpoint . '/select?q=' . $filtered_field_name . ':*&wt=json&rows=0&fq=' . $collection_filter;
     $field_response = @file_get_contents($field_request);
     $field_response = json_decode($field_response, TRUE);
 
@@ -98,7 +98,7 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   }
   $collection_fields_param = implode(',', $fields_used_in_collection);
  
-  $solr_request = $protocol . '://' . $solr_endpoint . '/select?q=PID:*&wt=csv&rows=1000000&fq=' . $collection_filter . '&fl=' . $collection_fields_param;
+  $solr_request = $protocol . $solr_endpoint . '/select?q=PID:*&wt=csv&rows=1000000&fq=' . $collection_filter . '&fl=' . $collection_fields_param;
   $metadata_csv = @file_get_contents($solr_request);
 
   if (strlen($metadata_csv)) {
