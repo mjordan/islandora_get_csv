@@ -80,7 +80,8 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   if ($collection_limiter == 'is member of') {
     $collection_field = variable_get('islandora_get_csv_collection_membership', 'RELS_EXT_isMemberOfCollection_uri_t');
     $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
-    $collection_filter = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
+    // $collection_filter = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
+    $collection_filter = urlencode($collection_field . ':"info\:fedora/' . $collection_pid . '"');
   }
   if ($collection_limiter == 'ancestors') {
     $fq = 'ancestors_ms:"' . $collection_pid . '"';
