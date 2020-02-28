@@ -117,7 +117,7 @@ function islandora_get_csv_islandora_basic_collection_build_manage_object(array 
 function islandora_get_csv_generate_list() {
   $generate_list_form = array();
   $generate_list_form['islandora_get_csv_generate_list_description'] = array(
-    '#markup' => t('The CSV file will contain one record per object.'),
+    '#markup' => t('The CSV file will contain one record per object. Change options if you do not want to use defaults.'),
     '#prefix' => '<div>',
     '#suffix' => '</div>',
     '#weight' => -10,
@@ -130,8 +130,8 @@ function islandora_get_csv_generate_list() {
     '#weight' => -5,
   );
   $common_form = islandora_get_csv_form();
-  foreach ($common_form as $element) {
-    $generate_list_form['islandora_get_csv'][] = $element;
+  foreach ($common_form as $element_name => $element_members) {
+    $generate_list_form['islandora_get_csv'][$element_name] = $element_members;
   }
 
   $generate_list_form['islandora_get_csv_generate_list_submit'] = array(
@@ -146,10 +146,9 @@ function islandora_get_csv_generate_list() {
  * Form submit callback.
  */
 function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
-  dd($form_state['values']);
   $collection_pid = arg(2);
-  $collection_limiter = $form_state['values'][0];
-  if ($link = islandora_get_csv_write_csv_from_gui($collection_pid, $collection_limiter)) {
+  $collection_limiter = $form_state['values']['islandora_get_csv_collection_limiter'];
+  if ($link = islandora_get_csv_write_csv_from_gui($collection_pid, $form_state['values'])) {
     drupal_set_message(t("Download your CSV at !link.",
       array('!link' => $link)));
   }
@@ -160,13 +159,13 @@ function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
  *
  * @param string $pid
  *   The collection's PID.
- * @param string $collection_limiter
- *   Either 'is member of' or 'ancestors'.
+ * @param array $options
+ *   The $form['values'].
  *
  * @return string|bool
  *   The rendered link to the output filei or FALSE if there was a problem.
  */
-function islandora_get_csv_write_csv_from_gui($pid, $collection_limiter) {
+function islandora_get_csv_write_csv_from_gui($pid, $options) {
   $pid_for_filename = preg_replace('/:/', '_', $pid);
   $output_dir = variable_get('file_public_path', conf_path() . '/files');
   $output_file_path = $output_dir . '/' . $pid_for_filename . '.csv';
@@ -175,7 +174,7 @@ function islandora_get_csv_write_csv_from_gui($pid, $collection_limiter) {
   }
 
   module_load_include('inc', 'islandora_get_csv', 'includes/utilities');
-  if (!$metadata_csv = islandora_get_csv_query_solr($pid, $collection_limiter)) {
+  if (!$metadata_csv = islandora_get_csv_query_solr($pid, $options)) {
     return FALSE;
   }
   file_put_contents($output_file_path, $metadata_csv);

@@ -9,17 +9,18 @@
  *
  * @param string $pid
  *   The collection's PID.
- * @param string $collection_limiter
- *   Either 'is member of' or 'ancestors'.
+ * @param array $options
+ *   The $form_state['values'] from the generate CSV form.
  *
  * @return array
  *   The CSV output from Solr, or FALSE if there was a problem.
  */
-function islandora_get_csv_query_solr($pid, $collection_limiter) {
+function islandora_get_csv_query_solr($pid, $options) {
   $collection_pid = preg_replace('/:/', '\:', $pid);
-  $field_type_filter = variable_get('islandora_get_csv_field_suffix_list', '_s|_ms');
+  $collection_limiter = $options['islandora_get_csv_collection_limiter'];
+  $field_type_filter = $options['islandora_get_csv_field_suffix_list'];
   $field_type_filter = preg_replace('/,/', '|', $field_type_filter);
-  $field_name_pattern = variable_get('islandora_get_csv_field_pattern', 'mods_*');
+  $field_name_pattern = $options['islandora_get_csv_field_pattern'];
 
   // We don't use IslandoraSolrQueryProcessor for CSV results because
   // it doesn't seem possible to override the 'wt' parameter.
@@ -47,12 +48,12 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   }
 
   // Filter out unwanted fields.
-  $unwanted_fields_string = variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms');
+  $unwanted_fields_string = $options['islandora_get_csv_omit_fields'];
   $unwanted_fields_array = explode(',', $unwanted_fields_string);
   $field_array_filtered = array_diff($field_array_filtered, $unwanted_fields_array);
 
   // Remove _x eqivalents to _mxx fields.
-  if (variable_get('islandora_get_remove_single_value_fields', TRUE)) {
+  if ($options['islandora_get_remove_single_value_fields']) {
     $dupes = array();
     foreach ($field_array_filtered as $field_name_to_test) {
       if (preg_match('/_m.{1,3}$/', $field_name_to_test, $matches)) {
@@ -74,11 +75,11 @@ function islandora_get_csv_query_solr($pid, $collection_limiter) {
   // wildcard and collection-based query filter to see if there are any
   // results. If there are results, the field is used in the collection;
   // if there aren't any results, the field is not used in the collection.
-  $additional_fields = variable_get('islandora_get_csv_additional_fields', 'PID');
+  $additional_fields = $options['islandora_get_csv_additional_fields'];
   $fields_used_in_collection = explode(',', $additional_fields);
 
   if ($collection_limiter == 'is member of') {
-    $collection_field = variable_get('islandora_get_csv_collection_membership', 'RELS_EXT_isMemberOfCollection_uri_t');
+    $collection_field = $options['islandora_get_csv_collection_membership'];
     $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
     $collection_filter = urlencode($collection_field . ':"info\:fedora/' . $collection_pid . '"');
   }

@@ -9,8 +9,8 @@ Islandora 7.x utility module to generate a CSV file of the metadata used in a co
 1. Click on the "Generate CSV file of metadata used in this collection" vertical tab
    ![The menu](docs/images/collection_menu.png)
 1. In the "Collection limiter" drop-down, select how you want to define members of a collection. "Is Member Of" will include only direct children of the current collection; "Ancestors" will include all objects that have the current collection as an ancestor. Note that using "Ancestors" requires that your Solr index contains the "ancestors_ms" field, e.g. for searching within collections.
-1. Click on the "Generate metadata CSV" button.
-   ![The button](docs/images/collection_button.png)
+1. Click on the "Generate metadata CSV" button. You can change the configuration options for your CSV if you do not want to use the existing options.
+   ![The button](docs/images/generate_csv_form.png)
 1. Download the file.
    ![The link](docs/images/collection_download.png)
 
@@ -33,7 +33,7 @@ You can also generate a CSV using Drush:
 
 ## Configuration
 
-Admin settings are at `admin/islandora/tools/islandora_get_csv`.
+Admin settings are at `admin/islandora/tools/islandora_get_csv`. These settings can be overridden when the user generates their CSV.
 
 Users need the 'Manage collection policies' permission to see the "Generate CSV file of metadata used in this collection" link and generate a CSV file.
 
