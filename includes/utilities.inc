@@ -123,3 +123,43 @@ function islandora_get_csv_write_output($results) {
   }
 }
 
+/**
+ * Gets the raw Solr document for a random member of the collection.
+ *
+ * @param string $collection_pid
+ *
+ * @return string
+ */
+function islandora_get_csv_get_sample_solr_doc($collection_pid) {
+  // First, get a random PID from the current collection.
+  $collection_pid = preg_replace('/:/', '\:', $collection_pid);
+  $collection_limiter = variable_get('islandora_get_csv_collection_limiter', 'is member of');
+
+  if ($collection_limiter == 'is member of') {
+    $collection_field = variable_get('islandora_get_csv_collection_membership', 'RELS_EXT_isMemberOfCollection_uri_t');
+    $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
+    $collection_filter = urlencode($collection_field . ':"info\:fedora/' . $collection_pid . '"');
+  }
+  if ($collection_limiter == 'ancestors') {
+    $fq = 'ancestors_ms:"' . $collection_pid . '"';
+    $collection_filter = 'ancestors_ms:"' . $collection_pid . '"';
+  }
+
+  $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
+  $protocol =  variable_get('islandora_get_csv_protocol', 'http://');
+  $solr_request = $protocol . $solr_endpoint . '/select?q=PID:*&wt=json&rows=1000000&fq=' . $collection_filter . '&fl=PID';
+  $response = @file_get_contents($solr_request);
+  $response = json_decode($response, TRUE);
+  $num_docs = count($response['response']['docs']);
+  $random_index = rand(0, $num_docs);
+  $random_pid = $response['response']['docs'][$random_index]['PID'];
+
+  // Then, get the raw Solr document for the random PID.
+  $random_pid =  preg_replace('/:/', '\:', $random_pid);
+  $solr_request = $protocol . $solr_endpoint . '/select?q=PID:' . $random_pid . '&wt=json&rows=1';
+  // This is a hack.... re-encode the JSON so we can pretty print it.
+  $response = @file_get_contents($solr_request);
+  $response = json_decode($response, TRUE);
+  $pretty_doc = json_encode($response['response']['docs'][0], JSON_PRETTY_PRINT);
+  return '<pre>' . $pretty_doc . '</pre>';
+}
