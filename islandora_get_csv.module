@@ -122,6 +122,8 @@ function islandora_get_csv_islandora_basic_collection_build_manage_object(array 
  * Form definition.
  */
 function islandora_get_csv_generate_list() {
+  module_load_include('inc', 'islandora_get_csv', 'includes/utilities');
+  $collection_pid = arg(2);
   $generate_list_form = array();
   $generate_list_form['islandora_get_csv_generate_list_description'] = array(
     '#markup' => t('The CSV file will contain one record per object. Change options if you do not want to use defaults.'),
@@ -138,10 +140,21 @@ function islandora_get_csv_generate_list() {
   );
   $generate_list_form['islandora_get_csv']['islandora_get_csv_random_solr_doc_link'] = array(
     '#markup' => l(t('View the Solr document for a random member of this collection'), 'islandora_get_csv_render_sample_solr_document', array('attributes' => array('target' => '_blank'))), 
-    '#prefix' => '<div>',
-    '#suffix' => ' ' . t('(Will open in new window.)') . '</div>',
+    '#prefix' => '<div><p>&nbsp;',
+    '#suffix' => ' ' . t('(Will open in new window.)') . '</p></div>',
   );
   $common_form = islandora_get_csv_form();
+
+  $common_form['islandora_get_csv_collection_limiter']['#access'] = FALSE;
+  if (islandora_get_csv_check_for_ancesors($collection_pid)) {
+    $generate_list_form['islandora_get_csv']['islandora_get_csv_include_descendents'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Include all child objects, including pages, child items, and members of subcollections.'),
+      '#default_value' => variable_get('islandora_get_csv_remove_single_value_fields', TRUE),
+      '#description' => t("If unchecked, only direct child members of this collection will be included in the CSV."),
+    );
+  }
+
   foreach ($common_form as $element_name => $element_members) {
     $generate_list_form['islandora_get_csv'][$element_name] = $element_members;
   }
@@ -159,7 +172,6 @@ function islandora_get_csv_generate_list() {
  */
 function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
   $collection_pid = arg(2);
-  $collection_limiter = $form_state['values']['islandora_get_csv_collection_limiter'];
   if ($link = islandora_get_csv_write_csv_from_gui($collection_pid, $form_state['values'])) {
     drupal_set_message(t("Download your CSV at !link.",
       array('!link' => $link)));

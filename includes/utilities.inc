@@ -36,12 +36,8 @@ function islandora_get_csv_query_solr($pid, $options) {
     }
   }
 
-  // If user chose 'Ancestors', check to see if that field has been indexed.
   if ($collection_limiter == 'ancestors') {
-    $ancestors_request = $protocol . '://' . $solr_endpoint . '/select?q=ancestors_ms:*&fl=PID&wt=json&rows=1&fq=ancestors_ms:"' . $collection_pid . '"';
-    $ancestors_response = @file_get_contents($ancestors_request);
-    $ancestors_response = json_decode($ancestors_response, TRUE);
-    if ($ancestors_response['response']['numFound'] == 0) {
+    if (!islandora_get_csv_check_for_ancesors($pid)) {
       drupal_set_message(t('Your Solr index does not include ancestors.'), 'warning');
       return FALSE;
     }
@@ -83,7 +79,7 @@ function islandora_get_csv_query_solr($pid, $options) {
     $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
     $collection_filter = urlencode($collection_field . ':"info\:fedora/' . $collection_pid . '"');
   }
-  if ($collection_limiter == 'ancestors') {
+  if ($collection_limiter == 'ancestors' && $options['islandora_get_csv_include_descendents']) {
     $fq = 'ancestors_ms:"' . $collection_pid . '"';
     $collection_filter = 'ancestors_ms:"' . $collection_pid . '"';
   }
@@ -162,4 +158,29 @@ function islandora_get_csv_get_sample_solr_doc($collection_pid) {
   $response = json_decode($response, TRUE);
   $pretty_doc = json_encode($response['response']['docs'][0], JSON_PRETTY_PRINT);
   return '<pre>' . $pretty_doc . '</pre>';
+}
+
+
+/**
+ * Checks to see if 'ancestors' have been indexed.
+ *
+ * @param string $collection_pid
+ *   The raw (including ':') PID of the current collection.
+ *
+ * @return bool
+ *   TRUE if ancestors are present, FALSE if not.
+ */
+function islandora_get_csv_check_for_ancesors($collection_pid) {
+  $collection_pid = preg_replace('/:/', '\:', $collection_pid);
+  $protocol =  variable_get('islandora_get_csv_protocol', 'http://');
+  $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
+  $ancestors_request = $protocol . '://' . $solr_endpoint . '/select?q=ancestors_ms:*&fl=PID&wt=json&rows=1&fq=ancestors_ms:"' . $collection_pid . '"';
+  $ancestors_response = @file_get_contents($ancestors_request);
+  $ancestors_response = json_decode($ancestors_response, TRUE);
+  if ($ancestors_response['response']['numFound'] > 0) {
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
 }
