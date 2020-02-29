@@ -74,14 +74,15 @@ function islandora_get_csv_query_solr($pid, $options) {
   $additional_fields = $options['islandora_get_csv_additional_fields'];
   $fields_used_in_collection = explode(',', $additional_fields);
 
-  if ($collection_limiter == 'is member of') {
-    $collection_field = $options['islandora_get_csv_collection_membership'];
-    $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
-    $collection_filter = urlencode($collection_field . ':"info\:fedora/' . $collection_pid . '"');
-  }
+  // Ancestors use the literal PID, not the one prepended by 'info:fedora'.
   if ($collection_limiter == 'ancestors' && $options['islandora_get_csv_include_descendents']) {
-    $fq = 'ancestors_ms:"' . $collection_pid . '"';
-    $collection_filter = 'ancestors_ms:"' . $collection_pid . '"';
+    // $fq = 'ancestors_ms:"' . $pid . '"';
+    $collection_filter = 'ancestors_ms:"' . $pid . '"';
+  }
+  else {
+    $collection_field = $options['islandora_get_csv_collection_membership'];
+    // $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
+    $collection_filter = urlencode($collection_field . ':"info\:fedora/' . $collection_pid . '"');
   }
 
   foreach ($field_array_filtered as $filtered_field_name) {
@@ -133,11 +134,11 @@ function islandora_get_csv_get_sample_solr_doc($collection_pid) {
 
   if ($collection_limiter == 'is member of') {
     $collection_field = variable_get('islandora_get_csv_collection_membership', 'RELS_EXT_isMemberOfCollection_uri_t');
-    $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
+    // $fq = $collection_field . ':"info\:fedora/' . $collection_pid . '"';
     $collection_filter = urlencode($collection_field . ':"info\:fedora/' . $collection_pid . '"');
   }
   if ($collection_limiter == 'ancestors') {
-    $fq = 'ancestors_ms:"' . $collection_pid . '"';
+    // $fq = 'ancestors_ms:"' . $collection_pid . '"';
     $collection_filter = 'ancestors_ms:"' . $collection_pid . '"';
   }
 
@@ -174,7 +175,7 @@ function islandora_get_csv_check_for_ancesors($collection_pid) {
   $collection_pid = preg_replace('/:/', '\:', $collection_pid);
   $protocol =  variable_get('islandora_get_csv_protocol', 'http://');
   $solr_endpoint = variable_get('islandora_solr_url', 'localhost:8080/solr');
-  $ancestors_request = $protocol . '://' . $solr_endpoint . '/select?q=ancestors_ms:*&fl=PID&wt=json&rows=1&fq=ancestors_ms:"' . $collection_pid . '"';
+  $ancestors_request = $protocol . $solr_endpoint . '/select?q=ancestors_ms:*&fl=PID&wt=json&rows=1&fq=ancestors_ms:"' . $collection_pid . '"';
   $ancestors_response = @file_get_contents($ancestors_request);
   $ancestors_response = json_decode($ancestors_response, TRUE);
   if ($ancestors_response['response']['numFound'] > 0) {
