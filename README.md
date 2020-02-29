@@ -10,10 +10,10 @@ Islandora 7.x utility module to generate a CSV file of the metadata used in a co
    ![The menu](docs/images/collection_menu.png)
 1. If you want to change the default options for what apears in your CSV file, click on the "Options" link. These options require some knowledge of the Islandora Solr index.
    ![The button](docs/images/generate_csv_form.png)
-   When you are ready, click on the "Generate metadata CSV" button.
    A couple of things to note:
    * In the "Collection limiter" drop-down, select how you want to define members of a collection. "Is Member Of" will include only direct children of the current collection; "Ancestors" will include all objects that have the current collection as an ancestor. Note that using "Ancestors" requires that your Solr index contains the "ancestors_ms" field, e.g. for searching within collections.
    * Clicking on the "View the Solr document for a random member of this collection" link within the "Options" section will select a random object from the curent collection and open the raw Solr document for that object in a new tab. This is useful in selecting the other options available to you in the "Options" section.
+   When you are ready, click on the "Generate metadata CSV" button.
 1. Download the file.
    ![The link](docs/images/collection_download.png)
 

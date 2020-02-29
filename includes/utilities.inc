@@ -53,7 +53,7 @@ function islandora_get_csv_query_solr($pid, $options) {
   $field_array_filtered = array_diff($field_array_filtered, $unwanted_fields_array);
 
   // Remove _x eqivalents to _mxx fields.
-  if ($options['islandora_get_remove_single_value_fields']) {
+  if ($options['islandora_get_csv_remove_single_value_fields']) {
     $dupes = array();
     foreach ($field_array_filtered as $field_name_to_test) {
       if (preg_match('/_m.{1,3}$/', $field_name_to_test, $matches)) {

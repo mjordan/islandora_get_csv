@@ -93,10 +93,10 @@ function islandora_get_csv_form() {
     '#default_value' => variable_get('islandora_get_csv_omit_fields', 'mods_subject_descendants_all_ms,mods_titleInfo_title_all_ms'),
     '#description' => t("A comma-separated list of specific Solr fields to exclude from the CSV file."),
   );
-  $form['islandora_get_remove_single_value_fields'] = array(
+  $form['islandora_get_csv_remove_single_value_fields'] = array(
     '#type' => 'checkbox',
     '#title' => t('Remove single-value fields where applicable'),
-    '#default_value' => variable_get('islandora_get_remove_single_value_fields', TRUE),
+    '#default_value' => variable_get('islandora_get_csv_remove_single_value_fields', TRUE),
     '#description' => t("Many fields in Islandora's Solr index have both single- and multivalue equivalents. Checking this will remove single-value fields from the CSV file that have multivalue equivalents, for example 'mods_titleInfo_title_s' if 'mods_titleInfo_title_ms' exists."),
   );
 
