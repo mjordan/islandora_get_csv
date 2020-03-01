@@ -189,3 +189,22 @@ function islandora_get_csv_check_for_ancesors($collection_pid) {
     return FALSE;
   }
 }
+
+/**
+ * List of system variables used by this module.
+ *
+ * @return array
+ */
+function islandora_get_csv_system_variables() {
+  $variables = array(
+    'islandora_get_csv_additional_fields',
+    'islandora_get_csv_collection_limiter',
+    'islandora_get_csv_collection_membership',
+    'islandora_get_csv_field_pattern',
+    'islandora_get_csv_field_suffix_list',
+    'islandora_get_csv_omit_fields',
+    'islandora_get_csv_protocol',
+    'islandora_get_csv_remove_single_value_fields',
+  );
+  return $variables;
+}

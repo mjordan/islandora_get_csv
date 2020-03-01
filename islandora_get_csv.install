@@ -9,9 +9,7 @@
  * Implements hook_uninstall().
  */
 function islandora_get_csv_uninstall() {
-  $variables = array(
-    'islandora_usage_stats_csv_per_ds',
-    'islandora_usage_stats_csv_dsids_to_skip',
-  );
+  module_load_include('inc', 'islandora_get_csv', 'includes/utilities');
+  $variables = islandora_get_csv_system_variables();
   array_walk($variables, 'variable_del');
 }

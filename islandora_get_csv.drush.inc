@@ -27,10 +27,6 @@ function islandora_get_csv_drush_command() {
           'description' => dt('Absolute or relative path to the output file.'),
           'required' => TRUE,
         ),
-        // 'remove_line_breaks' => array(
-          // 'description' => dt('Removes line breaks from values.'),
-          // 'value' => 'optional',
-        // ),
       ),
       'examples' => array(
         'Get metadata for all items in the Islandora Basic Image collection' => 'drush islandora-get-csv-get-csv --collection_pid=islandora:sp_basic_image_collection --output_file=/tmp/output.csv',
@@ -68,8 +64,14 @@ function drush_islandora_get_csv_get_csv() {
     }
   }
 
+  $settings_variables = islandora_get_csv_system_variables();
+  $options = array();
+  foreach ($settings_variables as $variable) {
+    $options[$variable] = variable_get($variable);
+  }
+
   $output_file_path = trim(drush_get_option('output_file'));
-  if ($results = islandora_get_csv_query_solr($pid)) {
+  if ($results = islandora_get_csv_query_solr($pid, $options)) {
     islandora_get_csv_write_output($results);
     drush_log(dt('CSV file for metadata in the !pid collection written to !path.', array(
       '!pid' => $pid,
