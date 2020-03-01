@@ -99,6 +99,10 @@ function islandora_get_csv_query_solr($pid, $options) {
   $solr_request = $protocol . $solr_endpoint . '/select?q=PID:*&wt=csv&rows=1000000&fq=' . $collection_filter . '&fl=' . $collection_fields_param;
   $metadata_csv = @file_get_contents($solr_request);
 
+  if ($options['islandora_get_csv_show_query']) {
+    drupal_set_message(t('@query', array('@query' => $solr_request)));
+  }
+
   if (strlen($metadata_csv)) {
     return $metadata_csv;
   }

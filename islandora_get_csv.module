@@ -161,6 +161,13 @@ function islandora_get_csv_generate_list() {
     $generate_list_form['islandora_get_csv'][$element_name] = $element_members;
   }
 
+  $generate_list_form['islandora_get_csv_show_query'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show Solr query'),
+    '#default_value' => FALSE,
+    '#description' => t("Useful for debugging."),
+  );
+
   $generate_list_form['islandora_get_csv_generate_list_submit'] = array(
     '#type' => 'submit',
     '#value' => t('Generate metadata CSV'),
@@ -175,7 +182,7 @@ function islandora_get_csv_generate_list() {
 function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
   $collection_pid = arg(2);
   if ($link = islandora_get_csv_write_csv_from_gui($collection_pid, $form_state['values'])) {
-    drupal_set_message(t("Download your CSV at !link.",
+    drupal_set_message(t("!link.",
       array('!link' => $link)));
   }
 }
@@ -207,7 +214,7 @@ function islandora_get_csv_write_csv_from_gui($pid, $options) {
   // Remove the path to the files directory since it's added by file_create_url().
   $relative_file_path = preg_replace("#$output_dir#", '', $output_file_path);
   $download_path = file_create_url(file_build_uri($relative_file_path));
-  return l(t('here'), $download_path);
+  return l(t('Download your metadata CSV'), $download_path);
 }
 
 
