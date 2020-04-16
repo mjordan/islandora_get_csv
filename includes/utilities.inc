@@ -97,6 +97,14 @@ function islandora_get_csv_query_solr($pid, $options) {
   $collection_fields_param = implode(',', $fields_used_in_collection);
  
   $solr_request = $protocol . $solr_endpoint . '/select?q=PID:*&wt=csv&rows=1000000&fq=' . $collection_filter . '&fl=' . $collection_fields_param;
+  if (strpos($solr_request, 'http://http://') !== false || strpos($solr_request, 'https://https://') !== false || strpos($solr_request, 'http://https://') !== false || strpos($solr_request, 'https://http://') !== false) {
+    drupal_set_message(t('Your Solr endpoint already contains the %protocol protocol.
+    Please configure islandora_get_csv and set Protocol to "None".', array('%protocol' => $protocol)), 'error');
+  }
+  elseif (strpos($solr_request, 'http') !== 0) {
+    drupal_set_message(t('Your Solr endpoint lacks a protocol. Please configure islandora_get_csv 
+    and set Protocol to "http" or "https".'), 'error');
+  }
   $metadata_csv = @file_get_contents($solr_request);
 
   if ($options['islandora_get_csv_show_query']) {
