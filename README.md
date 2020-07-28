@@ -1,4 +1,4 @@
-# Islandora Metadata CSV
+# Islandora Get CSV
 
 ## Overview
 
