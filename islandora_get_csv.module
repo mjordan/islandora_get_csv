@@ -58,7 +58,7 @@ function islandora_get_csv_form() {
     '#type' => 'select',
     '#options' => array('is member of' => 'Is Member Of', 'ancestors' => 'Ancestors'),
     '#title' => t('Collection limiter'),
-    '#description' => t("If you have \"ancestors_ms\" indexed, choose \"Ancestors\" to include child objects " . 
+    '#description' => t("If you have \"ancestors_ms\" indexed, choose \"Ancestors\" to include child objects " .
       "such as pages in your CSV. Otherwise, select \"Is Member Of\"."),
     '#default_value' => variable_get('islandora_get_csv_collection_limiter', 'is member of'),
     '#weight' => -10,
@@ -82,7 +82,7 @@ function islandora_get_csv_form() {
     '#description' => t("A comma-separated list of Solr field type suffixes to include in the CSV file, including the leading '_'."),
   );
   $form['islandora_get_csv_additional_fields'] = array(
-    '#type' => 'textfield',
+    '#type' => 'textarea',
     '#title' => t('Solr fields to include'),
     '#default_value' => variable_get('islandora_get_csv_additional_fields', 'PID,RELS_EXT_hasModel_uri_s'),
     '#description' => t('A comma-separated list of specific Solr fields to include in the CSV file. These fields are included in addition to the fields filtered by the patterns in the above two settings.'),
@@ -139,7 +139,7 @@ function islandora_get_csv_generate_list() {
     '#weight' => -5,
   );
   $generate_list_form['islandora_get_csv']['islandora_get_csv_random_solr_doc_link'] = array(
-    '#markup' => l(t('View the Solr document for a random member of this collection'), 'islandora_get_csv_render_sample_solr_document', array('attributes' => array('target' => '_blank'))), 
+    '#markup' => l(t('View the Solr document for a random member of this collection'), 'islandora_get_csv_render_sample_solr_document', array('attributes' => array('target' => '_blank'))),
     '#prefix' => '<div><p>&nbsp;',
     '#suffix' => ' ' . t('(Will open in new window.)') . '</p></div>',
   );
