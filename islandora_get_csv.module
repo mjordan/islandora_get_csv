@@ -6,6 +6,35 @@
  */
 
 /**
+ * Implementation of hook_cron.
+ */
+function islandora_get_csv_cron() {
+  if (strlen(variable_get('islandora_get_csv_files_expiry', '48')) === 0) {
+    return;
+  }
+
+  $csv_dir = variable_get('islandora_get_csv_files_subdir', 'collection_metadata_files');
+  $output_dir = variable_get('file_public_path', conf_path() . '/files');
+  $output_dir = realpath($output_dir . '/' . $csv_dir);
+
+  $max_hours = variable_get('islandora_get_csv_files_expiry', '48');
+  $stale_timestamp = strtotime("-" . $max_hours  . " hours");
+
+  $csv_files = array_diff(scandir($output_dir), array('..', '.'));
+  foreach ($csv_files as $file) {
+    $csv_file_path = $output_dir . '/' . $file;
+    if (filemtime($csv_file_path) <= $stale_timestamp) {
+      if (unlink($csv_file_path)) {
+         watchdog('islandora_get_csv', 'Deleted CSV metadata file @file.', array('@file' => $csv_file_path));
+      }
+      else {
+         watchdog('islandora_get_csv', 'Could not delete CSV metadata file @file.', array('@file' => $csv_file_path), 'error');
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function islandora_get_csv_menu() {
@@ -42,6 +71,24 @@ function islandora_get_csv_admin_settings() {
     '#title' => t('HTTP protocol'),
     '#default_value' => variable_get('islandora_get_csv_protocol', 'http'),
     '#description' => t("This module gets your Solr server's address from the Islandora Solr Search module, but you need to indicate whether it uses 'http' or 'https'. Use 'none' if your Solr Search module already includes the protocol."),
+  );
+  $form['islandora_get_csv_files'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('CSV file management settings'),
+    '#collapsible' => FALSE,
+  );
+  $form['islandora_get_csv_files']['islandora_get_csv_files_subdir'] = array(
+    '#type' => 'textfield',
+    '#title' => t('CSV files subdirectory'),
+    '#default_value' => variable_get('islandora_get_csv_files_subdir', 'collection_metadata_csv_files'),
+    '#description' => t("Subdirectory to write CSV files to."),
+  );
+  $form['islandora_get_csv_files']['islandora_get_csv_files_expiry'] = array(
+    '#type' => 'textfield',
+    '#size' => 5,
+    '#title' => t('Max file age'),
+    '#default_value' => variable_get('islandora_get_csv_files_expiry', '48'),
+    '#description' => t("Number of hours to keep the CSV files before automatically deleting them. Leave empty to not delete files."),
   );
   return system_settings_form($form);
 }
@@ -196,12 +243,16 @@ function islandora_get_csv_generate_list_submit_callback($form, $form_state) {
  *   The $form['values'].
  *
  * @return string|bool
- *   The rendered link to the output filei or FALSE if there was a problem.
+ *   The rendered link to the output file or FALSE if there was a problem.
  */
 function islandora_get_csv_write_csv_from_gui($pid, $options) {
   $pid_for_filename = preg_replace('/:/', '_', $pid);
   $output_dir = variable_get('file_public_path', conf_path() . '/files');
-  $output_file_path = $output_dir . '/' . $pid_for_filename . '.csv';
+  $csv_dir = variable_get('islandora_get_csv_files_subdir', 'collection_metadata_files');
+  if (!file_exists($output_dir . '/' . $csv_dir)) {
+    mkdir($output_dir . '/' . $csv_dir);
+  }
+  $output_file_path = $output_dir . '/' . $csv_dir . '/' . $pid_for_filename . '.csv';
   if (file_exists($output_file_path)) {
     unlink($output_file_path);
   }
