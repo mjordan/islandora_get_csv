@@ -27,6 +27,9 @@ function islandora_get_csv_drush_command() {
           'description' => dt('Absolute or relative path to the output file.'),
           'required' => TRUE,
         ),
+        'include_descendents' => array(
+          'description' => dt('True or false - include child objects of child collections.'),
+        ),
       ),
       'examples' => array(
         'Get metadata for all items in the Islandora Basic Image collection' => 'drush islandora-get-csv-get-csv --collection_pid=islandora:sp_basic_image_collection --output_file=/tmp/output.csv',
@@ -68,6 +71,9 @@ function drush_islandora_get_csv_get_csv() {
   $options = array();
   foreach ($settings_variables as $variable) {
     $options[$variable] = variable_get($variable);
+  }
+  if(drush_get_option('include_descendents')) {
+    $options['islandora_get_csv_include_descendents'] = true;
   }
 
   $output_file_path = trim(drush_get_option('output_file'));
