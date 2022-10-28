@@ -27,7 +27,7 @@ function islandora_get_csv_drush_command() {
           'description' => dt('Absolute or relative path to the output file.'),
           'required' => TRUE,
         ),
-        'include_descendents' => array(
+        'include_descendants' => array(
           'description' => dt('True or false - include child objects of child collections.'),
         ),
       ),
@@ -72,7 +72,7 @@ function drush_islandora_get_csv_get_csv() {
   foreach ($settings_variables as $variable) {
     $options[$variable] = variable_get($variable);
   }
-  if(drush_get_option('include_descendents')) {
+  if(drush_get_option('include_descendants')) {
     $options['islandora_get_csv_include_descendents'] = true;
   }
 
