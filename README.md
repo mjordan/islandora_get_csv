@@ -29,6 +29,10 @@ You can also generate a CSV using Drush:
 
 `drush islandora-get-csv-get-csv --collection_pid=islandora:sp_basic_image_collection --output_file=/tmp/output.csv`
 
+To include objects in subcollections of this collection, use the `--include_descendants` option:
+
+`drush islandora-get-csv-get-csv --collection_pid=islandora:sp_basic_image_collection --include_descendants --output_file=/tmp/output.csv`
+
 ## Installation
 
 1. `git clone https://github.com/mjordan/islandora_get_csv.git`
